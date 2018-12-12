@@ -6,24 +6,26 @@ using UnityEngine.UI;
 
 public class GameController : MonoBehaviour {
 
-    private static GameObject item;
-    private static GameObject hearts1;
-    private static GameObject hearts2;
-    private static GameObject hearts3;
-    private static GameObject hearts4;
-    private static GameObject hearts5;
-    private static GameObject[] hearts;
-    private static Vector3 itemScale;
-    private static Vector3 hideScale;
-    private static Vector3 displayScale;
+    public GameObject[] numbers;
+    public GameObject oneUp;
+
     private static int deathState;
     private static float restartTimer;
     private static PlayerController playerController;
-    private static int playerLives = 5;
-    private static GameObject infoText;
-    private static bool awaitingF3 = false;
-    private static Vector3 playerPosition = new Vector3(-7.59f, 1.56f, -2f);
+    private static Vector3 playerPosition = new Vector3(-8.521f, 0.3f, -5f);
     private static AudioSource[] audioClips;
+    private static GameObject score;
+    private static GameObject coin;
+    private static GameObject time;
+    private static int scoreNum = 0;
+    private static int coinNum = 0;
+    private static int timeNum;
+    private static float interval;
+    private static float invincibleTimer;
+    private static bool isInvincible;
+    private static bool gameOngoing;
+    private static bool startCounting;
+    private static float countingDuration;
 
     public void Awake()
     {
@@ -33,18 +35,8 @@ public class GameController : MonoBehaviour {
     
 	
 	// Update is called once per frame
-	void Update () {  
-        if (awaitingF3)
-        {
-            if (Input.GetKey(KeyCode.F3))
-            {
-                playerLives = 5;
-                awaitingF3 = false;
-                playerPosition = new Vector3(-7.59f, 1.56f, -2f);
-                SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-            }
-        }
-        else
+	void Update () {
+        if (!startCounting)
         {
             if (deathState == 1)
             {
@@ -54,81 +46,144 @@ public class GameController : MonoBehaviour {
                     SceneManager.LoadScene(SceneManager.GetActiveScene().name);
                 }
             }
-        }        
-	}
+            if (gameOngoing)
+            {
+                interval -= Time.deltaTime;
+                if (interval <= 0)
+                {
+                    timeNum--;
+                    interval = 0.5f;
+                    if (timeNum == 99)
+                    {
+                        audioClips[0].Stop();
+                        audioClips[4].Stop();
+                        audioClips[6].Play();
+                    }
+                    else if (timeNum == 0)
+                    {
+                        playerController.KillPlayer();
+                    }
+                }
+            }
 
-    // Use this for initialization
-    void Start()
-    {
-    }
+            if (isInvincible)
+            {
+                invincibleTimer -= Time.deltaTime;
+                if (invincibleTimer <= 0)
+                {
+                    audioClips[4].Stop();
+                    audioClips[0].Play();
+                    isInvincible = false;
+                }
+            }
 
-    public void GainLoseKey(bool hasKey)
-    {
-        if (hasKey)
-        {
-            item.transform.localScale = displayScale;
+            score.GetComponent<Text>().text = "SCORE\n" + scoreNum.ToString("000000");
+            coin.GetComponent<Text>().text = "x " + coinNum.ToString("00");
+            time.GetComponent<Text>().text = "TIME\n" + timeNum.ToString("000");
         }
         else
         {
-            item.transform.localScale = hideScale;
+            countingDuration -= Time.deltaTime;
+            if (countingDuration <= 0)
+            {
+                interval -= Time.deltaTime;
+                if (interval <= 0 && timeNum > 0)
+                {
+                    timeNum--;
+                    scoreNum += 50;
+                    interval = 0.02f;
+                    audioClips[7].Play();
+                    score.GetComponent<Text>().text = "SCORE\n" + scoreNum.ToString("000000");
+                    time.GetComponent<Text>().text = "TIME\n" + timeNum.ToString("000");
+                }
+            }
         }
+        
     }
 
     public void Win()
     {
-        infoText.GetComponent<Text>().text = "Congratulation! You've successfully found the gold!\nPress 'F3' to play again";
-        awaitingF3 = true;
         audioClips[0].Stop();
-        audioClips[2].Play();
+        audioClips[4].Stop();
+        audioClips[6].Stop();
+        audioClips[5].Play();
+        isInvincible = false;
+        gameOngoing = false;
+    }
+    public void Clear()
+    {
+        audioClips[1].Play();
+        startCounting = true;
     }
 
     public void Die()
     {
-        playerLives--;
-        hearts[playerLives].transform.localScale = hideScale;
-        if (playerLives > 0)
-        {
-            deathState = 1;
-        }
-        else
-        {
-            infoText.GetComponent<Text>().text = "Game Over!\nPress 'F3' to play again";
-            awaitingF3 = true;
-            audioClips[0].Stop();
-            audioClips[1].Play();
-        }
+        deathState = 1;
+        audioClips[0].Stop();
+        audioClips[4].Stop();
+        audioClips[6].Stop();
+        audioClips[3].Play();
     }
 
     public void Checkpoint(Vector3 position)
     {
-        playerPosition = new Vector3 (position.x + 4, position.y, position.z);
+        playerPosition = new Vector3 (position.x, position.y, position.z);
     }
 
     private void LevelSetUp()
     {
+        timeNum = 300;
+        interval = 0.5f;
         playerController = GameObject.FindWithTag("Player").GetComponent<PlayerController>();
-        hearts1 = GameObject.FindWithTag("Heart");
-        hearts2 = GameObject.FindWithTag("Heart2");
-        hearts3 = GameObject.FindWithTag("Heart3");
-        hearts4 = GameObject.FindWithTag("Heart4");
-        hearts5 = GameObject.FindWithTag("Heart5");
-        infoText = GameObject.FindWithTag("InfoText");
-        hearts = new GameObject[] { hearts1, hearts2, hearts3, hearts4, hearts5 };
-        item = GameObject.FindWithTag("Item");
-        itemScale = item.transform.localScale;
-        hideScale = new Vector3(0, 0, 0);
-        displayScale = new Vector3(1, 1, 1);
+        score = GameObject.FindWithTag("ScoreTex");
+        coin = GameObject.FindWithTag("ScoreCoin");
+        time = GameObject.FindWithTag("ScoreTime");
         deathState = 0;
         restartTimer = 3.0f;
         audioClips = GetComponents<AudioSource>();
         GameObject.FindWithTag("Player").transform.position = playerPosition;
-        for (int i = 0; i < playerLives; i++)
-        {
-            hearts[i].transform.localScale = displayScale;
-        }
+        invincibleTimer = 13f;
+        isInvincible = false;
+        gameOngoing = true;
+        startCounting = false;
+        countingDuration = 1f;
         audioClips[1].Stop();
-        audioClips[2].Stop();
         audioClips[0].Play();
+    }
 
+    public void Score(string s, Vector3 position)
+    {
+        if (s == "1up")
+        {
+            Instantiate(oneUp, position, oneUp.transform.rotation);
+            audioClips[2].Play();
+        }
+        else
+        {
+            for (var i = 0; i < s.Length; i++)
+            {
+                Vector3 newPosition = new Vector3(position.x + i * numbers[(int)char.GetNumericValue(s[i])].GetComponent<Renderer>().bounds.size.x, position.y, -4);
+                Instantiate(numbers[(int)char.GetNumericValue(s[i])], newPosition, numbers[(int)char.GetNumericValue(s[i])].transform.rotation);
+            }
+            scoreNum += int.Parse(s);
+        }      
+        
+    }
+
+    public void Coin()
+    {
+        coinNum++;
+        if (coinNum == 100) { 
+            coinNum = 0;
+            audioClips[2].Play();
+        }   
+    }
+
+    public void Invincible()
+    {
+
+        audioClips[0].Stop();
+        audioClips[4].Play();
+        isInvincible = true;
     }
 }

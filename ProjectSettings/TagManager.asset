@@ -5,24 +5,18 @@ TagManager:
   serializedVersion: 2
   tags:
   - Ground
-  - Threat
-  - Chest
-  - Bullet
-  - Key
-  - Destroyable
-  - Trigger
-  - platform
   - Enemy
-  - MovingPlatform
-  - RightGate
-  - WinCondition
-  - Item
-  - Heart
-  - Heart2
-  - Heart3
-  - Heart4
-  - Heart5
-  - InfoText
+  - GrowMushrrom
+  - Bullet
+  - Flower
+  - Star
+  - Reflect
+  - LifeMushroom
+  - ScoreTex
+  - ScoreCoin
+  - ScoreTime
+  - KillablePlatform
+  - FinalTile
   layers:
   - Default
   - TransparentFX
@@ -32,10 +26,10 @@ TagManager:
   - UI
   - 
   - 
-  - 
-  - 
-  - 
-  - 
+  - PowerUps
+  - Enemy
+  - Bound
+  - Player
   - 
   - 
   - 

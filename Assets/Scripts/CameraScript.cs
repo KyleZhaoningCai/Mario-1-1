@@ -21,6 +21,10 @@ public class CameraScript : MonoBehaviour {
     // Update is called once per frame
     void Update()
     {
+        if (gameObject.transform.position.x > xMin)
+        {
+            xMin = gameObject.transform.position.x;
+        }
         if (_player != null)
         {
             float x = Mathf.Clamp(_player.transform.position.x, xMin, xMax);
